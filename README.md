@@ -1,3 +1,4 @@
+[Screencast from 2026-10-24 20-35-26.webm](https://github.com/user-attachments/assets/153d0ae6-365f-4894-ae3b-8a623582fe39)
 # Fire Rover ROS 2 Simulation
 
 A differential-drive fire-fighting rover simulation for ROS 2 Jazzy and Gazebo
