@@ -1,0 +1,100 @@
+<!--
+
+  Autonomous fire-fighting rover  (ROS 2 Jazzy, Gazebo Harmonic)
+
+  Usage:
+    xacro fire_rover.urdf.xacro                 # RViz / mock hardware
+    xacro fire_rover.urdf.xacro use_sim:=true   # Gazebo + gz_ros2_control
+
+  Frame tree (REP-103/105: X fwd, Y left, Z up):
+
+    base_footprint                      (floor, TF root)
+    └─ base_link                        (chassis centre)
+       ├─ left_wheel_link / right_wheel_link      (continuous, velocity)
+       ├─ front_caster_link / rear_caster_link    (fixed)
+       ├─ imu_link
+       ├─ camera_link ─ camera_optical_frame
+       ├─ thermal_camera_link ─ thermal_camera_optical_frame
+       ├─ flame_sensor_left/center/right_link
+       ├─ gas_sensor_link
+       ├─ lidar_mast_link ─ lidar_link
+       └─ water_tank_link
+          └─ turret_base_link
+             └─ turret_pan_link           (revolute Z, position)
+                └─ turret_tilt_link       (revolute Y, position)
+                   └─ nozzle_link         (+X = water jet)
+
+  File layout:
+    common/materials.xacro   colours            chassis.xacro  base, wheels, casters
+    common/inertials.xacro   inertia macros     sensors.xacro  lidar, cameras, IMU, flame, gas
+    ros2_control.xacro       hardware iface     turret.xacro   water tank + pan/tilt nozzle
+    gazebo.xacro             sim plugins/sensors
+-->
+<robot name="fire_rover" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:arg name="use_sim" default="false"/>
+<!--
+ ======================= DIMENSIONS (metres / kg) ======================= 
+-->
+<!--
+ Keep wheel_radius and wheel_separation in sync with config/ros2_controllers.yaml 
+-->
+<xacro:property name="chassis_length" value="0.50"/>
+<xacro:property name="chassis_width" value="0.34"/>
+<xacro:property name="chassis_height" value="0.12"/>
+<xacro:property name="chassis_mass" value="6.0"/>
+<xacro:property name="ground_clearance" value="0.05"/>
+<!-- height of base_link above the floor -->
+<xacro:property name="base_z" value="${ground_clearance + chassis_height/2}"/>
+<xacro:property name="wheel_radius" value="0.08"/>
+<xacro:property name="wheel_width" value="0.05"/>
+<xacro:property name="wheel_mass" value="0.6"/>
+<xacro:property name="wheel_separation" value="0.40"/>
+<xacro:property name="wheel_x" value="0.0"/>
+<xacro:property name="caster_radius" value="0.04"/>
+<xacro:property name="caster_mass" value="0.1"/>
+<xacro:property name="tank_length" value="0.22"/>
+<xacro:property name="tank_width" value="0.26"/>
+<xacro:property name="tank_height" value="0.12"/>
+<xacro:property name="tank_mass" value="3.0"/>
+<!--
+ ============================== MODULES ================================= 
+-->
+<xacro:include filename="common/materials.xacro"/>
+<xacro:include filename="common/inertials.xacro"/>
+<xacro:include filename="chassis.xacro"/>
+<xacro:include filename="sensors.xacro"/>
+<xacro:include filename="turret.xacro"/>
+<xacro:include filename="ros2_control.xacro"/>
+<xacro:include filename="gazebo.xacro"/>
+<!--
+ ============================== ASSEMBLY ================================ 
+-->
+<!-- Base -->
+<xacro:chassis/>
+<xacro:drive_wheel name="left" y_pos="${ wheel_separation/2}"/>
+<xacro:drive_wheel name="right" y_pos="${-wheel_separation/2}"/>
+<xacro:caster name="front" x_pos="${ chassis_length/2 - 0.05}"/>
+<xacro:caster name="rear" x_pos="${-chassis_length/2 + 0.05}"/>
+<!-- Navigation sensors -->
+<xacro:lidar x="0.12" z="0.34"/>
+<xacro:box_sensor name="imu" xyz="0 0 0" sx="0.02" sy="0.02" sz="0.005" mass="0.02"/>
+<!-- Fire detection sensors (front deck / front face) -->
+<xacro:camera name="camera" xyz="0.225 0.06 0.085" mass="0.10"/>
+<xacro:camera name="thermal_camera" xyz="0.225 -0.06 0.085" mass="0.05" material="thermal_orange"/>
+<!--
+ IR flame sensors: left / centre / right, splayed +-0.5 rad for bearing estimation 
+-->
+<xacro:box_sensor name="flame_sensor_left" xyz="0.2575 0.10 0.015" rpy="0 0 0.5" sx="0.015" sy="0.03" sz="0.02" mass="0.01" material="fire_red"/>
+<xacro:box_sensor name="flame_sensor_center" xyz="0.2575 0.00 0.015" rpy="0 0 0.0" sx="0.015" sy="0.03" sz="0.02" mass="0.01" material="fire_red"/>
+<xacro:box_sensor name="flame_sensor_right" xyz="0.2575 -0.10 0.015" rpy="0 0 -0.5" sx="0.015" sy="0.03" sz="0.02" mass="0.01" material="fire_red"/>
+<!-- Gas / smoke sensor, rear deck beside the tank -->
+<xacro:box_sensor name="gas_sensor" xyz="-0.18 0.15 0.07" sx="0.03" sy="0.03" sz="0.02" mass="0.02" material="gas_green"/>
+<!-- Fire-fighting payload -->
+<xacro:water_tank x="-0.10"/>
+<xacro:fire_turret/>
+<!-- Hardware interface + simulation -->
+<xacro:fire_rover_ros2_control/>
+<xacro:if value="$(arg use_sim)">
+<xacro:gazebo_extensions/>
+</xacro:if>
+</robot>

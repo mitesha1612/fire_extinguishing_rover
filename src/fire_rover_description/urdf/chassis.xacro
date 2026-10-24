@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="chassis" params="">
+    <link name="base_footprint"/>
+    <link name="base_link">
+      <xacro:box_inertia mass="${chassis_mass}" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}"/>
+      <visual>
+        <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
+        <material name="rover_blue"/>
+      </visual>
+      <collision>
+        <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
+      </collision>
+    </link>
+    <joint name="base_footprint_joint" type="fixed">
+      <parent link="base_footprint"/>
+      <child link="base_link"/>
+      <origin xyz="0 0 ${base_z}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="drive_wheel" params="name y_pos">
+    <link name="${name}_wheel_link">
+      <xacro:cylinder_inertia mass="${wheel_mass}" radius="${wheel_radius}" length="${wheel_width}" origin_rpy="${pi / 2} 0 0"/>
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi / 2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="wheel_black"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi / 2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+    </link>
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}_wheel_link"/>
+      <origin xyz="${wheel_x} ${y_pos} ${wheel_radius - base_z}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.05" friction="0.0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="caster" params="name x_pos">
+    <link name="${name}_caster_link">
+      <xacro:sphere_inertia mass="${caster_mass}" radius="${caster_radius}"/>
+      <visual>
+        <geometry><sphere radius="${caster_radius}"/></geometry>
+        <material name="metal_gray"/>
+      </visual>
+      <collision>
+        <geometry><sphere radius="${caster_radius}"/></geometry>
+      </collision>
+    </link>
+    <joint name="${name}_caster_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_caster_link"/>
+      <origin xyz="${x_pos} 0 ${caster_radius - base_z}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+</robot>

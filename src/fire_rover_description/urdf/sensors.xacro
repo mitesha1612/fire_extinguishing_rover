@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="box_sensor" params="name xyz sx sy sz mass material:=sensor_gray rpy:='0 0 0'">
+    <link name="${name}_link">
+      <xacro:box_inertia mass="${mass}" x="${sx}" y="${sy}" z="${sz}"/>
+      <visual>
+        <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+      </collision>
+    </link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="camera" params="name xyz mass material:=sensor_gray">
+    <xacro:box_sensor name="${name}" xyz="${xyz}" sx="0.045" sy="0.045" sz="0.035" mass="${mass}" material="${material}"/>
+    <link name="${name}_optical_frame"/>
+    <joint name="${name}_optical_joint" type="fixed">
+      <parent link="${name}_link"/>
+      <child link="${name}_optical_frame"/>
+      <origin xyz="0 0 0" rpy="${-pi / 2} 0 ${-pi / 2}"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="lidar" params="x z">
+    <link name="lidar_mast_link">
+      <xacro:cylinder_inertia mass="0.15" radius="0.018" length="0.16"/>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.018" length="0.16"/></geometry>
+        <material name="metal_gray"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.018" length="0.16"/></geometry>
+      </collision>
+    </link>
+    <joint name="lidar_mast_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="lidar_mast_link"/>
+      <origin xyz="${x} 0 ${z - 0.08}" rpy="0 0 0"/>
+    </joint>
+    <link name="lidar_link">
+      <xacro:cylinder_inertia mass="0.12" radius="0.04" length="0.05"/>
+      <visual>
+        <geometry><cylinder radius="0.04" length="0.05"/></geometry>
+        <material name="sensor_gray"/>
+      </visual>
+      <collision>
+        <geometry><cylinder radius="0.04" length="0.05"/></geometry>
+      </collision>
+    </link>
+    <joint name="lidar_joint" type="fixed">
+      <parent link="lidar_mast_link"/>
+      <child link="lidar_link"/>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+</robot>
